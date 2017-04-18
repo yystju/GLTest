@@ -1,16 +1,11 @@
 package shi.quan.gltest;
 
+import android.app.Activity;
 import android.opengl.GLES31;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.support.annotation.Nullable;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
 
 import java.io.InputStream;
 import java.nio.FloatBuffer;
@@ -18,31 +13,20 @@ import java.nio.FloatBuffer;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class MainActivity extends AppCompatActivity {
+/**
+ * Created by quan on 17/4/18.
+ */
 
-    // Used to load the 'native-lib' library on application startup.
-    static {
-        System.loadLibrary("native-lib");
+public class TestActivity extends Activity {
+    public TestActivity() {
+        super();
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-
-        // Example of a call to a native method
-        GLSurfaceView surfaceView = (GLSurfaceView) findViewById(R.id.glsurface);
+        GLSurfaceView surfaceView = new GLSurfaceView(this);
 
         surfaceView.setEGLContextClientVersion(3);
 
@@ -64,16 +48,16 @@ public class MainActivity extends AppCompatActivity {
                             1.0f,  1.0f, 0.0f,
                             -1.0f, 1.0f, 0.0f,
                             1.0f, -1.0f, 0.0f,
-                           -1.0f, -1.0f, 0.0f,
+                            -1.0f, -1.0f, 0.0f,
                     };
 
                     buffer = Utilities.wrapBuffer(vVertices);
 
-                    InputStream vsIns = MainActivity.this.getResources().getAssets().open("glsl/vs.glsl");
+                    InputStream vsIns = TestActivity.this.getResources().getAssets().open("glsl/vs.glsl");
                     String vsScript = Utilities.loadStringFromInputStream(vsIns);
                     vsIns.close();
 
-                    InputStream fsIns = MainActivity.this.getResources().getAssets().open("glsl/fs.glsl");
+                    InputStream fsIns = TestActivity.this.getResources().getAssets().open("glsl/fs.glsl");
                     String fsScript = Utilities.loadStringFromInputStream(fsIns);
                     fsIns.close();
 
@@ -140,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     vPositionHandler = GLES31.glGetAttribLocation(program, "vPosition");
-                    colorHandle = GLES31.glGetAttribLocation(program, "vColor");
+                    colorHandle = GLES31.glGetUniformLocation(program, "vColor");
                 } catch (Exception ex) {
                     Log.e("TEST", ex.getMessage(), ex);
                 }
@@ -150,15 +134,13 @@ public class MainActivity extends AppCompatActivity {
             public void onSurfaceChanged(GL10 gl10, int width, int height) {
                 Log.i("TEST", String.format("[onSurfaceChanged] w : %d, h : %d", width, height));
 
-//                int n = Math.min(width, height);
-//                int x = width > n ? (width - n) / 2 : 0;
-//                int y = height > n ? (height - n) / 2 : 0;
-//
-//                Log.i("TEST", String.format("\tx : %d, y : %d, n : %d", x, y, n));
-//
-//                GLES31.glViewport(x, y, n, n);
+                int n = Math.min(width, height);
+                int x = width > n ? (width - n) / 2 : 0;
+                int y = height > n ? (height - n) / 2 : 0;
 
-                GLES31.glViewport(0, 0, width, height);
+                Log.i("TEST", String.format("\tx : %d, y : %d, n : %d", x, y, n));
+
+                GLES31.glViewport(x, y, n, n);
             }
 
             @Override
@@ -171,44 +153,36 @@ public class MainActivity extends AppCompatActivity {
 
                 buffer.position(0);
                 GLES31.glVertexAttribPointer(vPositionHandler, 3, GLES31.GL_FLOAT, false, 3 * 4, buffer);
-                GLES31.glVertexAttrib4fv(colorHandle, new float[]{0.0f, 1.0f, 0.0f, 1.0f}, 0);
+                GLES31.glGetUniformfv(colorHandle, 1, new float[]{0.0f, 1.0f, 0.0f, 1.0f}, 0);
 
                 GLES31.glEnableVertexAttribArray(vPositionHandler);
-                GLES31.glEnableVertexAttribArray(colorHandle);
 
                 GLES31.glDrawArrays(GLES31.GL_TRIANGLE_STRIP, 0, 4);
 
                 GLES31.glDisableVertexAttribArray(vPositionHandler);
-                GLES31.glDisableVertexAttribArray(colorHandle);
             }
         });
+
+        this.setContentView(surfaceView);
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
+    protected void onStart() {
+        super.onStart();
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
+    protected void onResume() {
+        super.onResume();
     }
 
-    /**
-     * A native method that is implemented by the 'native-lib' native library,
-     * which is packaged with this application.
-     */
-    public native String stringFromJNI();
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
 }
