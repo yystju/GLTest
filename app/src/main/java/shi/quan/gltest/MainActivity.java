@@ -3,7 +3,9 @@ package shi.quan.gltest;
 import android.opengl.GLES20;
 import android.opengl.GLES31;
 import android.opengl.GLSurfaceView;
+import android.opengl.Matrix;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -51,23 +53,42 @@ public class MainActivity extends AppCompatActivity {
             private int program;
             private FloatBuffer buffer;
             private int vPositionHandler;
-            private int colorHandle;
-            //private int matrixHandler;
+            private int uTextureHandle;
+            private int uMatrixHandler;
+
+            private int texture;
+
+            private float[] matrix = new float[16];
+
             @Override
             public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
                 Log.i("TEST", String.format("[onSurfaceCreated]"));
                 try {
+                    GLES31.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
                     GLES31.glEnable(GLES31.GL_DEPTH_TEST);
                     GLES31.glEnable(GLES31.GL_CULL_FACE);
 
-                    float[] vVertices = new float[] {
-                            1.0f,  1.0f, 0.0f,
-                            -1.0f, 1.0f, 0.0f,
-                            1.0f, -1.0f, 0.0f,
+//                    float[] vVertices = new float[] {
+//                            0.5f,  1.0f, 0.0f,
+//                            -1.0f, 1.0f, 0.0f,
+//                            1.0f, -1.0f, 0.0f,
 //                            -1.0f, -1.0f, 0.0f,
+//                    };
+
+                    float[] vVertices = new float[] {
+                      0.5f,  0.0f, 0.0f,
+                      -0.5f, 0.0f, 0.0f,
+                      0.0f, 0.5f, 0.0f,
+                      0.0f, 0.0f, 0.5f,
+                      0.5f,  0.0f, 0.0f,
+                      -0.5f, 0.0f, 0.0f,
                     };
 
                     buffer = Utilities.wrapBuffer(vVertices);
+
+                    InputStream textureIns = MainActivity.this.getResources().getAssets().open("image/ditu.jpg");
+                    texture = Utilities.loadTexture(textureIns);
+                    textureIns.close();
 
                     InputStream vsIns = MainActivity.this.getResources().getAssets().open("glsl/vs.glsl");
                     String vsScript = Utilities.loadStringFromInputStream(vsIns);
@@ -139,12 +160,10 @@ public class MainActivity extends AppCompatActivity {
                         return;
                     }
 
-                    vPositionHandler = GLES31.glGetAttribLocation(program, "vPosition");
-                    colorHandle = GLES20.glGetUniformLocation(program, "vColor");
+                    vPositionHandler = GLES31.glGetAttribLocation(program, "v_Position");
+                    uTextureHandle = GLES20.glGetUniformLocation(program, "u_Texture");
 
-                    //matrixHandler = GLES31.glGetUniformLocation(program, "uMVPMatrix");
-
-                    GLES31.glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+                    uMatrixHandler = GLES31.glGetUniformLocation(program, "u_Matrix");
                 } catch (Exception ex) {
                     Log.e("TEST", ex.getMessage(), ex);
                 }
@@ -163,18 +182,34 @@ public class MainActivity extends AppCompatActivity {
 
                 GLES31.glClear(GLES31.GL_DEPTH_BUFFER_BIT | GLES31.GL_COLOR_BUFFER_BIT);
 
+                Matrix.setIdentityM(matrix, 0);
+
+                Matrix.setLookAtM(matrix, 0, 0, 0, -3, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
+
+                Matrix.translateM(matrix, 0, 0, 0, 0);
+
+                long time = SystemClock.uptimeMillis() % 4000L;
+                float mAngle = 0.090f * ((int) time);
+                Matrix.setRotateM(matrix, 0, mAngle, 0, 0, -1.0f);
+//                Matrix.rotateM(matrix, 0, 0, mAngle, 0, -1.0f);
+
+                GLES31.glUniformMatrix4fv(uMatrixHandler, 1, false, matrix, 0);
+
                 GLES31.glUseProgram(program);
 
                 buffer.position(0);
                 GLES31.glVertexAttribPointer(vPositionHandler, 3, GLES31.GL_FLOAT, false, 3 * 4, buffer);
                 GLES31.glEnableVertexAttribArray(vPositionHandler);
 
-//                buffer.position(0);
-//                GLES31.glEnableVertexAttribArray(0);
-//                GLES31.glVertexAttribPointer(0, 3, GLES31.GL_FLOAT, false, 0, buffer);
+                //GLES31.glUniform4fv(uTextureHandle, 1, new float[]{0.0f, 0.5f, 0.5f, 1.0f}, 0);
 
+                GLES31.glActiveTexture(GLES31.GL_TEXTURE0);
 
-                GLES31.glUniform4fv(colorHandle, 1, new float[]{0.0f, 0.5f, 0.5f, 1.0f}, 0);
+                // Bind the texture to this unit.
+                GLES31.glBindTexture(GLES31.GL_TEXTURE_2D, texture);
+
+                GLES31.glUniform1i(uTextureHandle, 0);
+
                 GLES31.glDrawArrays(GLES31.GL_TRIANGLE_STRIP, 0, 4);
 
                 GLES31.glDisableVertexAttribArray(vPositionHandler);
