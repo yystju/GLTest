@@ -202,7 +202,7 @@ class TestRenderer implements android.opengl.GLSurfaceView.Renderer {
 
           float ratio =  height / width;
           Matrix.frustumM(projectionM, 0, -ratio, ratio, -1, 1, 2, 10);
-          Matrix.setLookAtM(cameraM, 0, 2, 2, -2, 0, 0, 0, 0, 1, 0);
+          Matrix.setLookAtM(cameraM, 0, 1.6f, 1.6f, -1.6f, 0, 0, 0, 0, 1, 0);
 
           Log.i("TEST", String.format("projectionM : %s", Utilities.dumpMatrix(projectionM)));
           Log.i("TEST", String.format("cameraM : %s", Utilities.dumpMatrix(cameraM)));
@@ -228,6 +228,16 @@ class TestRenderer implements android.opengl.GLSurfaceView.Renderer {
 
           Matrix.multiplyMM(M, 0, projectionM, 0, cameraM, 0);
           Matrix.multiplyMM(matrix, 0, M, 0, rotateM, 0);
+
+          float s = (float)Math.abs(Math.sin(Math.PI * 2 * ((double)time / 4000.0)));
+
+          if(s < 0.6) {
+              s = 0.6f;
+          }
+
+          Matrix.scaleM(matrix, 0, s, s, s);
+
+          //Log.i("TEST", String.format("matrix : %s", Utilities.dumpMatrix(matrix)));
 
           GLES31.glUniformMatrix4fv(uMatrixHandler, 1, false, matrix, 0);
           GLES31.glUseProgram(program);
