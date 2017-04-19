@@ -27,6 +27,7 @@ class TestRenderer implements android.opengl.GLSurfaceView.Renderer {
   private float[] matrix = new float[16];
   private float[] projectionM = new float[16];
   private float[] cameraM = new float[16];
+  private float[] rotateM = new float[16];
 
 //  private int modelType = GLES31.GL_TRIANGLES;
 //  private float[] vVertices = new float[] {
@@ -105,7 +106,7 @@ class TestRenderer implements android.opengl.GLSurfaceView.Renderer {
 
           buffer = Utilities.wrapBuffer(vVertices);
 
-          InputStream textureIns = this.context.getResources().getAssets().open("image/ditu.jpg");
+          InputStream textureIns = this.context.getResources().getAssets().open("image/bricks2.jpg");
           texture = Utilities.loadTexture(textureIns);
           textureIns.close();
 
@@ -190,52 +191,59 @@ class TestRenderer implements android.opengl.GLSurfaceView.Renderer {
   @Override
   public void onSurfaceChanged(GL10 gl10, int width, int height) {
       Log.i("TEST", String.format("[onSurfaceChanged] w : %d, h : %d", width, height));
+      try {
+//          GLES31.glViewport(0, 0, width, height);
 
-      //GLES31.glViewport(0, 0, width, height);
+          int n = Math.min(width, height);
+          int x = width > n ? (width - n) / 2 : 0;
+          int y = height > n ? (height - n) / 2 : 0;
 
-      int n = Math.min(width, height);
-      int x = width > n ? (width - n) / 2 : 0;
-      int y = height > n ? (height - n) / 2 : 0;
+          GLES31.glViewport(x, y, n, n);
 
-      GLES31.glViewport(x, y, n, n);
+          float ratio =  height / width;
+          Matrix.frustumM(projectionM, 0, -ratio, ratio, -1, 1, 2, 10);
+          Matrix.setLookAtM(cameraM, 0, 2, 2, -2, 0, 0, 0, 0, 1, 0);
+
+          Log.i("TEST", String.format("projectionM : %s", Utilities.dumpMatrix(projectionM)));
+          Log.i("TEST", String.format("cameraM : %s", Utilities.dumpMatrix(cameraM)));
+      } catch (Exception ex) {
+          Log.e("TEST", ex.getMessage(), ex);
+      }
   }
 
   @Override
   public void onDrawFrame(GL10 gl10) {
-      //Log.i("TEST", String.format("[onDrawFrame]"));
+      try {
+          //Log.i("TEST", String.format("[onDrawFrame]"));
 
-      GLES31.glClear(GLES31.GL_DEPTH_BUFFER_BIT | GLES31.GL_COLOR_BUFFER_BIT);
+          GLES31.glClear(GLES31.GL_DEPTH_BUFFER_BIT | GLES31.GL_COLOR_BUFFER_BIT);
 
-      long time = SystemClock.uptimeMillis() % 4000L;
-      float mAngle = 0.090f * ((int) time);
-      Matrix.setRotateM(matrix, 0, mAngle, 0, -1.0f, 0.0f);
+          long time = SystemClock.uptimeMillis() % 4000L;
+          float angle = 0.090f * ((int) time);
+          Matrix.setRotateM(rotateM, 0, angle, 0, 1.0f, 0.0f);
 
-//                Matrix.frustumM(projectionM, 0, -1.0f, 1.0f, -1.0f, 1.0f, 3.0f, 7.0f);
-//                Matrix.multiplyMM(matrix, 0, matrix, 0, projectionM, 0);
+          float[] M = new float[16];
 
-//                Matrix.setIdentityM(cameraM, 0);
-//                Matrix.setLookAtM(cameraM, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0);
-//                Matrix.multiplyMM(matrix, 0, matrix, 0, cameraM, 0);
+          Matrix.setIdentityM(M, 0);
 
-      //Matrix.setLookAtM(matrix, 0, 1.0f, 1.0f, 1.0f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
+          Matrix.multiplyMM(M, 0, projectionM, 0, cameraM, 0);
+          Matrix.multiplyMM(matrix, 0, M, 0, rotateM, 0);
 
-      //Matrix.frustumM(matrix, 0, -1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 10.0f);
+          GLES31.glUniformMatrix4fv(uMatrixHandler, 1, false, matrix, 0);
+          GLES31.glUseProgram(program);
 
-      //Matrix.translateM(matrix, 0, 0.0f, 0.0f, 5.0f);
+          buffer.position(0);
+          GLES31.glVertexAttribPointer(vPositionHandler, 3, GLES31.GL_FLOAT, false, 3 * 4, buffer);
+          GLES31.glEnableVertexAttribArray(vPositionHandler);
 
-      GLES31.glUniformMatrix4fv(uMatrixHandler, 1, false, matrix, 0);
+          GLES31.glActiveTexture(GLES31.GL_TEXTURE0);
+          GLES31.glBindTexture(GLES31.GL_TEXTURE_2D, texture);
 
-      GLES31.glUseProgram(program);
-
-      buffer.position(0);
-      GLES31.glVertexAttribPointer(vPositionHandler, 3, GLES31.GL_FLOAT, false, 3 * 4, buffer);
-      GLES31.glEnableVertexAttribArray(vPositionHandler);
-
-      GLES31.glActiveTexture(GLES31.GL_TEXTURE0);
-      GLES31.glBindTexture(GLES31.GL_TEXTURE_2D, texture);
-
-      GLES31.glUniform1i(uTextureHandle, 0);
-      GLES31.glDrawArrays(modelType, 0, vVertices.length);
-      GLES31.glDisableVertexAttribArray(vPositionHandler);
+          GLES31.glUniform1i(uTextureHandle, 0);
+          GLES31.glDrawArrays(modelType, 0, vVertices.length);
+          GLES31.glDisableVertexAttribArray(vPositionHandler);
+      } catch (Exception ex) {
+          Log.e("TEST", ex.getMessage(), ex);
+      }
   }
 }

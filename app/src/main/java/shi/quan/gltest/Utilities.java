@@ -114,4 +114,18 @@ public class Utilities {
 
         return textureHandle[0];
     }
+
+    public static String dumpMatrix(float[] matrix) {
+        String str = "";
+
+        for(int i = 0; i < matrix.length; ++i) {
+            if(i != 0) str += ",";
+            if(i % 4 == 0) str += "\n";
+            str += ("" + matrix[i]);
+        }
+
+        str += "";
+
+        return str;
+    }
 }
