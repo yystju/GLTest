@@ -19,6 +19,9 @@ import javax.microedition.khronos.opengles.GL10;
 
 class TestRenderer implements android.opengl.GLSurfaceView.Renderer {
   private int program;
+  private int vsHandler;
+  private int fsHandler;
+
   private FloatBuffer buffer;
   private int vPositionHandler;
   private int uTextureHandle;
@@ -48,48 +51,50 @@ class TestRenderer implements android.opengl.GLSurfaceView.Renderer {
 //    0.5f,  0.0f, 0.0f,
 //   };
 
-//  private int modelType = GLES31.GL_TRIANGLE_STRIP;
-//  private float[] vVertices = new float[] {
-//    0.5f,  0.0f, 0.0f,
-//    -0.5f, 0.0f, 0.0f,
-//    0.0f, 0.5f, 0.0f,
-//    0.0f, 0.0f, 0.5f,
-//    0.5f,  0.0f, 0.0f,
-//    -0.5f, 0.0f, 0.0f,
-//  };
-
-  private int modelType = GLES31.GL_TRIANGLES;
+  private int modelType = GLES31.GL_TRIANGLE_STRIP;
   private float[] vVertices = new float[] {
-    //Right
     1.0f,  0.0f, 0.0f,
-    0.0f, 0.0f, -1.0f,
-    0.0f, 1.0f, 0.0f,
-
-    //Back
-    0.0f,  0.0f, -1.0f,
     -1.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f,
-
-    //Left
-    -1.0f,  0.0f, 0.0f,
     0.0f, 0.0f, 1.0f,
-    0.0f, 1.0f, 0.0f,
-
-    //Front
-    0.0f,  0.0f, 1.0f,
-    1.0f, 0.0f, 0.0f,
-    0.0f, 1.0f, 0.0f,
-
-    //Bottom 1
     1.0f,  0.0f, 0.0f,
+    0.0f, -1.0f, 0.0f,
     -1.0f, 0.0f, 0.0f,
-    0.0f, 0.0f, -1.0f,
-
-    //Bottom 2
-    1.0f,  0.0f, 0.0f,
     0.0f, 0.0f, 1.0f,
-    -1.0f, 0.0f, 0.0f,
   };
+
+//  private int modelType = GLES31.GL_TRIANGLES;
+//  private float[] vVertices = new float[] {
+//    //Right
+//    1.0f,  0.0f, 0.0f,
+//    0.0f, 0.0f, -1.0f,
+//    0.0f, 1.0f, 0.0f,
+//
+//    //Back
+//    0.0f,  0.0f, -1.0f,
+//    -1.0f, 0.0f, 0.0f,
+//    0.0f, 1.0f, 0.0f,
+//
+//    //Left
+//    -1.0f,  0.0f, 0.0f,
+//    0.0f, 0.0f, 1.0f,
+//    0.0f, 1.0f, 0.0f,
+//
+//    //Front
+//    0.0f,  0.0f, 1.0f,
+//    1.0f, 0.0f, 0.0f,
+//    0.0f, 1.0f, 0.0f,
+//
+//    //Bottom 1
+//    1.0f,  0.0f, 0.0f,
+//    -1.0f, 0.0f, 0.0f,
+//    0.0f, 0.0f, -1.0f,
+//
+//    //Bottom 2
+//    1.0f,  0.0f, 0.0f,
+//    0.0f, 0.0f, 1.0f,
+//    -1.0f, 0.0f, 0.0f,
+//  };
 
   private Context context = null;
   public TestRenderer(Context context) {
@@ -104,9 +109,7 @@ class TestRenderer implements android.opengl.GLSurfaceView.Renderer {
           GLES31.glEnable(GLES31.GL_DEPTH_TEST);
           GLES31.glEnable(GLES31.GL_CULL_FACE);
 
-          buffer = Utilities.wrapBuffer(vVertices);
-
-          InputStream textureIns = this.context.getResources().getAssets().open("image/bricks2.jpg");
+          InputStream textureIns = this.context.getResources().getAssets().open("image/bricks.jpg");
           texture = Utilities.loadTexture(textureIns);
           textureIns.close();
 
@@ -118,7 +121,11 @@ class TestRenderer implements android.opengl.GLSurfaceView.Renderer {
           String fsScript = Utilities.loadStringFromInputStream(fsIns);
           fsIns.close();
 
-          int vsHandler = GLES31.glCreateShader(GLES31.GL_VERTEX_SHADER);
+          Log.i("TEST", String.format("[onSurfaceCreated] *before* program : %d", program));
+          Log.i("TEST", String.format("[onSurfaceCreated] *before* fsHandler : %d", fsHandler));
+          Log.i("TEST", String.format("[onSurfaceCreated] *before* vsHandler : %d", vsHandler));
+
+          vsHandler = GLES31.glCreateShader(GLES31.GL_VERTEX_SHADER);
 
           GLES31.glShaderSource(vsHandler, vsScript);
 
@@ -138,7 +145,7 @@ class TestRenderer implements android.opengl.GLSurfaceView.Renderer {
               return;
           }
 
-          int fsHandler = GLES31.glCreateShader(GLES31.GL_FRAGMENT_SHADER);
+          fsHandler = GLES31.glCreateShader(GLES31.GL_FRAGMENT_SHADER);
 
           GLES31.glShaderSource(fsHandler, fsScript);
 
@@ -159,6 +166,10 @@ class TestRenderer implements android.opengl.GLSurfaceView.Renderer {
           }
 
           program = GLES31.glCreateProgram();
+
+          Log.i("TEST", String.format("[onSurfaceCreated] *after* program : %d", program));
+          Log.i("TEST", String.format("[onSurfaceCreated] *after* fsHandler : %d", fsHandler));
+          Log.i("TEST", String.format("[onSurfaceCreated] *after* vsHandler : %d", vsHandler));
 
           GLES31.glAttachShader(program, vsHandler);
           GLES31.glAttachShader(program, fsHandler);
@@ -183,6 +194,10 @@ class TestRenderer implements android.opengl.GLSurfaceView.Renderer {
           vPositionHandler = GLES31.glGetAttribLocation(program, "v_Position");
           uTextureHandle = GLES20.glGetUniformLocation(program, "u_Texture");
           uMatrixHandler = GLES31.glGetUniformLocation(program, "u_Matrix");
+
+          Log.i("TEST", String.format("[onSurfaceCreated] vPositionHandler : %d", vPositionHandler));
+          Log.i("TEST", String.format("[onSurfaceCreated] uTextureHandle : %d", uTextureHandle));
+          Log.i("TEST", String.format("[onSurfaceCreated] uMatrixHandler : %d", uMatrixHandler));
       } catch (Exception ex) {
           Log.e("TEST", ex.getMessage(), ex);
       }
@@ -200,12 +215,14 @@ class TestRenderer implements android.opengl.GLSurfaceView.Renderer {
 
           GLES31.glViewport(x, y, n, n);
 
-          float ratio =  height / width;
+          float ratio = 1;
           Matrix.frustumM(projectionM, 0, -ratio, ratio, -1, 1, 2, 10);
-          Matrix.setLookAtM(cameraM, 0, 1.6f, 1.6f, -1.6f, 0, 0, 0, 0, 1, 0);
+          Matrix.setLookAtM(cameraM, 0, 1.8f, 1.8f, -1.8f, 0, 0, 0, 0, 1, 0);
 
           Log.i("TEST", String.format("projectionM : %s", Utilities.dumpMatrix(projectionM)));
           Log.i("TEST", String.format("cameraM : %s", Utilities.dumpMatrix(cameraM)));
+
+          buffer = Utilities.wrapBuffer(vVertices);
       } catch (Exception ex) {
           Log.e("TEST", ex.getMessage(), ex);
       }
@@ -220,7 +237,7 @@ class TestRenderer implements android.opengl.GLSurfaceView.Renderer {
 
           long time = SystemClock.uptimeMillis() % 4000L;
           float angle = 0.090f * ((int) time);
-          Matrix.setRotateM(rotateM, 0, angle, 0, 1.0f, 0.0f);
+          Matrix.setRotateM(rotateM, 0, angle, 1.0f, 0.0f, 0.0f);
 
           float[] M = new float[16];
 
@@ -229,18 +246,19 @@ class TestRenderer implements android.opengl.GLSurfaceView.Renderer {
           Matrix.multiplyMM(M, 0, projectionM, 0, cameraM, 0);
           Matrix.multiplyMM(matrix, 0, M, 0, rotateM, 0);
 
-          float s = (float)Math.abs(Math.sin(Math.PI * 2 * ((double)time / 4000.0)));
+          float s = (float) Math.abs(Math.sin(Math.PI * 2 * ((double) time / 4000.0)));
 
-          if(s < 0.6) {
-              s = 0.6f;
+          if (s < 0.6) {
+            s = 0.6f;
           }
 
           Matrix.scaleM(matrix, 0, s, s, s);
 
           //Log.i("TEST", String.format("matrix : %s", Utilities.dumpMatrix(matrix)));
 
-          GLES31.glUniformMatrix4fv(uMatrixHandler, 1, false, matrix, 0);
           GLES31.glUseProgram(program);
+
+          GLES31.glUniformMatrix4fv(uMatrixHandler, 1, false, matrix, 0);
 
           buffer.position(0);
           GLES31.glVertexAttribPointer(vPositionHandler, 3, GLES31.GL_FLOAT, false, 3 * 4, buffer);
@@ -250,7 +268,9 @@ class TestRenderer implements android.opengl.GLSurfaceView.Renderer {
           GLES31.glBindTexture(GLES31.GL_TEXTURE_2D, texture);
 
           GLES31.glUniform1i(uTextureHandle, 0);
+
           GLES31.glDrawArrays(modelType, 0, vVertices.length);
+
           GLES31.glDisableVertexAttribArray(vPositionHandler);
       } catch (Exception ex) {
           Log.e("TEST", ex.getMessage(), ex);

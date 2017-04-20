@@ -16,17 +16,20 @@ public class TestActivity extends Activity {
   }
 
   private GLSurfaceView view;
+  private TestRenderer renderer;
 
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
     Log.i("TEST", String.format("[TestActivity.onCreate]"));
     super.onCreate(savedInstanceState);
 
+    renderer = new TestRenderer(this);
+
     view = new GLSurfaceView(this);
 
     view.setEGLContextClientVersion(3);
 
-    view.setRenderer(new TestRenderer(this));
+    view.setRenderer(renderer);
 
     this.setContentView(view);
   }

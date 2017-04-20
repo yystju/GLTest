@@ -39,7 +39,7 @@ public class Utilities {
     }
 
     public static FloatBuffer wrapBuffer(float[] arry) {
-        ByteBuffer buffer = ByteBuffer.allocateDirect(arry.length * (Float.SIZE / Byte.SIZE));
+        ByteBuffer buffer = ByteBuffer.allocateDirect(arry.length * 4);
         buffer.order(ByteOrder.nativeOrder());
         FloatBuffer floatBuffer = buffer.asFloatBuffer();
 
