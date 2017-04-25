@@ -276,4 +276,8 @@ class TestRenderer implements android.opengl.GLSurfaceView.Renderer {
           Log.e("TEST", ex.getMessage(), ex);
       }
   }
+
+  public void dispose() {
+    GLES31.glDeleteProgram(this.program);
+  }
 }
